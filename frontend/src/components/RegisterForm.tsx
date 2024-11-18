@@ -35,7 +35,7 @@ export default function RegisterForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password, role: ['admin'] }),
+        body: JSON.stringify({ username, password}),
       })
 
       if (!response.ok) {
