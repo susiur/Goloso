@@ -32,9 +32,9 @@ export default function Navbar() {
   const navItems = [
     { name: 'Inicio', path: '/', icon: Home },
     { name: 'Productos', path: '/productos', icon: Brain },
-    { name: 'Proveedores', path: '/proveedores', icon: Truck },
     // Solo mostramos "Clientes" si el usuario tiene el rol "admin"
-    ...(role.includes('admin') ? [{ name: 'Clientes', path: '/clientes', icon: Users }] : [])
+    ...(role.includes('admin') ? [
+      { name: 'Proveedores', path: '/proveedores', icon: Truck },{name: 'Clientes', path: '/clientes', icon: Users }, ] : [])
   ]
   
 
