@@ -11,6 +11,7 @@ interface Cliente {
   contactInfo: string
   relocationInfo?: string
 }
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 async function fetchClientes(): Promise<Cliente[]> {
   const access_token = localStorage.getItem('token')
@@ -18,7 +19,7 @@ async function fetchClientes(): Promise<Cliente[]> {
     throw new Error('No se encontró token de acceso')
   }
 
-  const response = await fetch('http://localhost:3000/clients', {
+  const response = await fetch(`${API_URL}/clients`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${access_token}`,
@@ -39,7 +40,7 @@ async function sendClientesToBackend(clientes: Cliente[]) {
     throw new Error('No se encontró token de acceso')
   }
 
-  const response = await fetch('http://localhost:3000/clients', {
+  const response = await fetch(`${API_URL}/clients`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${access_token}`,

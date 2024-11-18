@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Loader2, Coffee, Heart } from 'lucide-react'
 import React from 'react'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export default function RegisterForm() {
   const [name, setName] = useState('')
@@ -37,7 +38,7 @@ export default function RegisterForm() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

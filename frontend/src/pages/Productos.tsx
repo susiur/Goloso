@@ -21,6 +21,8 @@ const qualityColors = {
   High: 'bg-green-100 text-green-600',
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price);
 };
@@ -31,7 +33,7 @@ async function fetchProductos(): Promise<Producto[]> {
     throw new Error('No se encontró token de acceso');
   }
 
-  const response = await fetch('http://localhost:3000/products', {
+  const response = await fetch(`${API_URL}/products`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${access_token}`,

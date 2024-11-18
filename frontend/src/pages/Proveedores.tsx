@@ -11,13 +11,15 @@ interface Proveedor {
   contactInfo: string
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 async function fetchProveedores(): Promise<Proveedor[]> {
   const access_token = localStorage.getItem('token')
   if (!access_token) {
     throw new Error('No se encontró token de acceso')
   }
 
-  const response = await fetch('http://localhost:3000/providers', {
+  const response = await fetch(`${API_URL}/providers`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${access_token}`,
