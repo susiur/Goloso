@@ -11,9 +11,12 @@ import { Product } from './products/entities/product-entity';
 import { AppUser } from './auth/entities/user-entity';
 import { Client } from './clients/entities/client-entity';
 
-
 @Module({
-  imports: [AuthModule, ProductsModule, ProvidersModule, ClientsModule,
+  imports: [
+    AuthModule,
+    ProductsModule,
+    ProvidersModule,
+    ClientsModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

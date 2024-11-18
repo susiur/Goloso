@@ -7,6 +7,8 @@ import LoginForm from './components/LoginForm';
 import PrivateRoute from './components/PrivateRoute';
 import RegisterForm from './components/RegisterForm';
 import Productos from './pages/Productos';
+import Proveedores from './pages/Proveedores';
+import Clientes from './pages/Clientes';
 
 function App() {
   return (
@@ -21,6 +23,22 @@ function App() {
           element={
             <PrivateRoute>
               <Productos />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/proveedores" 
+          element={
+            <PrivateRoute>
+              <Proveedores />
+            </PrivateRoute>
+          }
+        />
+        <Route 
+          path="/clientes" 
+          element={
+            <PrivateRoute>
+              <Clientes />
             </PrivateRoute>
           }
         />

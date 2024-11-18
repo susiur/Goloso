@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2, Coffee, Heart } from 'lucide-react'
 import React from 'react'
 
 export default function RegisterForm() {
@@ -23,7 +23,6 @@ export default function RegisterForm() {
     setIsLoading(true)
     setError('')
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setError('Por favor, ingrese un correo electrónico válido.')
@@ -31,7 +30,6 @@ export default function RegisterForm() {
       return
     }
 
-    // Basic password strength check
     if (password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.')
       setIsLoading(false)
@@ -51,7 +49,7 @@ export default function RegisterForm() {
         throw new Error('Error al registrarse')
       }
 
-      navigate('/login') // Redirect to login page after successful registration
+      navigate('/login')
     } catch (error) {
       setError('Error al registrarse. Por favor, intente de nuevo.')
     } finally {
@@ -60,25 +58,27 @@ export default function RegisterForm() {
   }
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle>Registrarse</CardTitle>
-        <CardDescription>Cree una nueva cuenta para acceder</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleRegister}>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
+    <div className="auth-background">
+      <Card className="auth-card">
+        <CardHeader className="auth-header">
+          <Heart className="w-12 h-12 mx-auto text-primary mb-2" />
+          <CardTitle className="text-2xl font-bold">Únete a Esperanza para todos</CardTitle>
+          <CardDescription>Crea una nueva cuenta para disfrutar nuestros servicios</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleRegister} className="auth-form">
+            <div className="space-y-2">
               <Label htmlFor="name">Nombre</Label>
               <Input
                 id="name"
                 placeholder="Ingrese su nombre"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="auth-input"
                 required
               />
             </div>
-            <div className="flex flex-col space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="email">Correo electrónico</Label>
               <Input
                 id="email"
@@ -86,10 +86,11 @@ export default function RegisterForm() {
                 placeholder="Ingrese su correo electrónico"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="auth-input"
                 required
               />
             </div>
-            <div className="flex flex-col space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
@@ -97,34 +98,35 @@ export default function RegisterForm() {
                 placeholder="Cree una contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
                 required
               />
             </div>
-          </div>
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <Button className="w-full mt-4" type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cargando...
-              </>
-            ) : (
-              'Registrarse'
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
+            <Button className="auth-button" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                'Registrarse'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="link" className="auth-link" onClick={() => navigate('/login')}>
+            ¿Ya tienes una cuenta? Inicia sesión
           </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="link" onClick={() => navigate('/login')}>
-          ¿Ya tienes una cuenta? Inicia sesión
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

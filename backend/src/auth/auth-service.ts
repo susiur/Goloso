@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,7 +21,7 @@ export class AuthService {
 
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersRepository.findOne({ where: { username } });
-    if (user && await bcrypt.compare(pass, user.password)) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -25,22 +29,28 @@ export class AuthService {
   }
 
   async login(loginUser: LoginAuthDto) {
-    const user = await this.validateUser(loginUser.username, loginUser.password);
+    const user = await this.validateUser(
+      loginUser.username,
+      loginUser.password,
+    );
     if (!user) {
       throw new UnauthorizedException();
     }
-    const payload = { username: user.username, sub: user.id };
+    const payload = { username: user.username, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
-  getJwtToken(arg0: { email: any; username: string; }) {
+  getJwtToken(arg0: { email: any; username: string }) {
     throw new Error('Method not implemented.');
   }
 
   async register(createauthDto: CreateAuthDto) {
     try {
-      const user = this.usersRepository.create({ ...createauthDto, password: bcrypt.hashSync(createauthDto.password, 10) });
+      const user = this.usersRepository.create({
+        ...createauthDto,
+        password: bcrypt.hashSync(createauthDto.password, 10),
+      });
       await this.usersRepository.save(user);
       const { username } = user;
       return { username };

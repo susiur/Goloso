@@ -6,17 +6,17 @@ export class AppUser {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar', {length:20, nullable: false, unique: true })
+  @Column('varchar', { length: 20, nullable: false, unique: true })
   username: string;
 
-  @Column('varchar', {length:255, nullable: false })
+  @Column('varchar', { length: 255, nullable: false })
   password: string;
 
-  @Column('text', { 
-    array: true, 
+  @Column('text', {
+    array: true,
     nullable: false,
-    default: ['user']
+    default: ['user'],
   })
   @MinLength(1)
-  role: string[]; 
+  role: string[];
 }

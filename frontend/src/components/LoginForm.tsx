@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Coffee, Heart } from 'lucide-react'
 import React from 'react'
 
 export default function LoginForm() {
@@ -20,6 +20,9 @@ export default function LoginForm() {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
+    console.log('Username:', username);
+    console.log('Password:', password);
+
     setError('')
 
     try {
@@ -28,7 +31,10 @@ export default function LoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+              username: username,
+              password: password,
+            }),
       })
 
       if (!response.ok) {
@@ -37,7 +43,8 @@ export default function LoginForm() {
 
       const data = await response.json()
       localStorage.setItem('token', data.access_token)
-      navigate('/dashboard') // Redirect to dashboard or home page
+      console.log('Token:', localStorage.getItem('token'));
+      navigate('/productos')
     } catch (error) {
       setError('Error al iniciar sesión. Por favor, intente de nuevo.')
     } finally {
@@ -46,25 +53,27 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle>Iniciar sesión</CardTitle>
-        <CardDescription>Ingrese sus credenciales para acceder</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleLogin}>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
+    <div className="auth-background">
+      <Card className="auth-card">
+        <CardHeader className="auth-header">
+          <Heart className="w-12 h-12 mx-auto text-primary mb-2" />
+          <CardTitle className="text-2xl font-bold">Bienvenido a Esperanza para todos</CardTitle>
+          <CardDescription>Inicie sesión para acceder a su cuenta</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="auth-form">
+            <div className="space-y-2">
               <Label htmlFor="username">Nombre de usuario</Label>
               <Input
                 id="username"
                 placeholder="Ingrese su nombre de usuario"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                className="auth-input"
                 required
               />
             </div>
-            <div className="flex flex-col space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
@@ -72,34 +81,35 @@ export default function LoginForm() {
                 placeholder="Ingrese su contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
                 required
               />
             </div>
-          </div>
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <Button className="w-full mt-4" type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cargando...
-              </>
-            ) : (
-              'Iniciar sesión'
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
+            <Button className="auth-button" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                'Iniciar sesión'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="link" className="auth-link" onClick={() => navigate('/register')}>
+            ¿No tienes una cuenta? Regístrate
           </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="link" onClick={() => navigate('/register')}>
-          ¿No tienes una cuenta? Regístrate
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

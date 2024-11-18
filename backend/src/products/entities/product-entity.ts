@@ -22,6 +22,9 @@ export class Product {
   price: number;
 
   @Column()
+  quality: string;
+
+  @Column()
   providerId: number;
 
   @ManyToOne(() => Provider, (provider) => provider.products)
