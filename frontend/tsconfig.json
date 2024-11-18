@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "allowSyntheticDefaultImports": true,
+    "target": "es6",            
+    "lib": ["es6", "dom"],     
+    "moduleResolution": "node",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "react"
+  }
+}
