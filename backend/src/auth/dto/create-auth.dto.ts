@@ -13,4 +13,5 @@ export class CreateAuthDto {
       'The password must have a Uppercase, lowercase letter, a number, and a special character',
   })
   password: string;
+  role: string[];
 }
