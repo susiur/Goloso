@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import React from 'react';
+import { getRole } from '@/utils/authUtils';
 
 interface Producto {
   id: number;
@@ -52,6 +53,8 @@ export default function Productos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<'All' | 'Low' | 'Medium' | 'High'>('All');
+  const [showCreateProductForm, setShowCreateProductForm] = useState(false); 
+  const role = getRole() || ''
 
   useEffect(() => {
     fetchProductos()
@@ -64,7 +67,36 @@ export default function Productos() {
     setSelectedQuality(quality);
   };
 
-  // Filtrar productos según la calidad seleccionada
+  const handleCreateProductClick = () => {
+    setShowCreateProductForm(true); 
+  };
+
+  const handleCreateProduct = async (productData: Producto) => {
+    const access_token = localStorage.getItem('token');
+    if (!access_token) {
+      setError('No se encontró token de acceso');
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${access_token}`,
+      },
+      body: JSON.stringify(productData),
+    });
+
+    if (!response.ok) {
+      setError('Error al crear el producto');
+      return;
+    }
+
+    const newProduct = await response.json();
+    setProductos((prev) => [...prev, newProduct]);
+    setShowCreateProductForm(false);
+  };
+
   const filteredProductos = selectedQuality === 'All'
     ? productos
     : productos.filter(producto => producto.quality === selectedQuality);
@@ -114,6 +146,82 @@ export default function Productos() {
           ))}
         </div>
 
+        {/* Botón para crear producto visible solo para admin */}
+        {role.includes('admin') && (
+          <button
+            onClick={handleCreateProductClick}
+            className="mb-8 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90"
+          >
+            Crear Producto
+          </button>
+        )}
+
+        {/* Formulario para crear un producto */}
+        {showCreateProductForm && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const newProduct: Producto = {
+                id: 0, // Esto será asignado automáticamente en el backend
+                name: formData.get('name') as string,
+                description: formData.get('description') as string,
+                price: Number(formData.get('price')),
+                quality: formData.get('quality') as 'Low' | 'Medium' | 'High',
+                providerId: 1, // Puedes obtener este valor de alguna parte, si es necesario
+              };
+              handleCreateProduct(newProduct);
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block font-semibold">Nombre</label>
+              <input
+                type="text"
+                name="name"
+                required
+                className="mt-2 px-4 py-2 w-full border rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold">Descripción</label>
+              <input
+                type="text"
+                name="description"
+                required
+                className="mt-2 px-4 py-2 w-full border rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold">Precio</label>
+              <input
+                type="number"
+                name="price"
+                required
+                className="mt-2 px-4 py-2 w-full border rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold">Calidad</label>
+              <select
+                name="quality"
+                required
+                className="mt-2 px-4 py-2 w-full border rounded-lg"
+              >
+                <option value="Low">Baja Calidad</option>
+                <option value="Medium">Calidad Media</option>
+                <option value="High">Alta Calidad</option>
+              </select>
+            </div>
+            <div className="mt-4">
+              <button type="submit" className="px-4 py-2 bg-accent text-accent-foreground rounded-lg">
+                Crear Producto
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Mostrar productos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProductos.map((producto) => (
             <Card key={producto.id} className="relative border rounded-lg shadow transition-transform hover:scale-105">
