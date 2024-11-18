@@ -1,10 +1,10 @@
 import { jwtDecode } from 'jwt-decode';
 export function getRole() {
-    const token = localStorage.getItem('token');
+    var token = localStorage.getItem('token');
     if (token) {
         try {
             // Intentamos decodificar el token
-            const decoded = jwtDecode(token);
+            var decoded = jwtDecode(token);
             console.log('Token decodificado:', decoded);
             // Verificamos si el campo `role` existe en el decoded token
             if (decoded && decoded.role) {

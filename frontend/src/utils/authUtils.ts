@@ -1,5 +1,4 @@
 import { jwtDecode } from 'jwt-decode';
-import { c } from 'vite/dist/node/types.d-aGj9QkWt';
 
 interface DecodedToken {
   role: string;

@@ -5,9 +5,7 @@
       "@/*": ["./src/*"]
     },
     "allowSyntheticDefaultImports": true,
-    "target": "es6",            
-    "lib": ["es6", "dom"],     
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "module": "esnext",
     "strict": true,
     "jsx": "react"

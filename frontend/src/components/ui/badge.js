@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -12,7 +23,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 import * as React from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-const badgeVariants = cva("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", {
+var badgeVariants = cva("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", {
     variants: {
         variant: {
             default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
@@ -26,7 +37,7 @@ const badgeVariants = cva("inline-flex items-center rounded-md border px-2.5 py-
     },
 });
 function Badge(_a) {
-    var { className, variant } = _a, props = __rest(_a, ["className", "variant"]);
-    return (React.createElement("div", Object.assign({ className: cn(badgeVariants({ variant }), className) }, props)));
+    var className = _a.className, variant = _a.variant, props = __rest(_a, ["className", "variant"]);
+    return (React.createElement("div", __assign({ className: cn(badgeVariants({ variant: variant }), className) }, props)));
 }
 export { Badge, badgeVariants };

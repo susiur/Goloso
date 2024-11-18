@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "resolutions": {
+    "rollup": "npm:@rollup/wasm-node"
+  },
   "dependencies": {
     "@nestjs/config": "^3.3.0",
     "@radix-ui/react-dropdown-menu": "^2.1.2",

@@ -5,11 +5,11 @@ import { Coffee, Globe, Heart, ShoppingBag, Users } from 'lucide-react';
 import React from "react";
 import { useNavigate } from 'react-router-dom';
 export default function Home() {
-    const navigate = useNavigate();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    useEffect(() => {
+    var navigate = useNavigate();
+    var _a = useState(false), isAuthenticated = _a[0], setIsAuthenticated = _a[1];
+    useEffect(function () {
         // Simula la verificación de autenticación, usando el token almacenado en localStorage.
-        const token = localStorage.getItem('token');
+        var token = localStorage.getItem('token');
         setIsAuthenticated(!!token);
     }, []);
     return (React.createElement("div", { className: "min-h-screen bg-background" },
@@ -34,7 +34,7 @@ export default function Home() {
                 React.createElement("section", { className: "text-center mb-16" },
                     React.createElement("h2", { className: "text-4xl font-bold mb-4 text-accent" }, "Bienvenido a Esperanza para Todos"),
                     React.createElement("p", { className: "text-xl mb-8 text-muted-foreground" }, "Unidos por la solidaridad y el compromiso de un mundo mejor"),
-                    React.createElement(Button, { size: "lg", onClick: () => navigate('/login') },
+                    React.createElement(Button, { size: "lg", onClick: function () { return navigate('/login'); } },
                         "Conoce nuestros proyectos",
                         React.createElement(Globe, { className: "ml-2" }))),
                 React.createElement("section", { className: "grid md:grid-cols-3 gap-8" },
