@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2, Coffee, Heart } from 'lucide-react'
+import { AlertCircle, Loader2, Heart } from 'lucide-react'
 import React from 'react'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export default function RegisterForm() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -23,13 +22,6 @@ export default function RegisterForm() {
     event.preventDefault()
     setIsLoading(true)
     setError('')
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setError('Por favor, ingrese un correo electrónico válido.')
-      setIsLoading(false)
-      return
-    }
 
     if (password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.')
@@ -43,7 +35,7 @@ export default function RegisterForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ username, password }),
       })
 
       if (!response.ok) {
@@ -69,24 +61,12 @@ export default function RegisterForm() {
         <CardContent>
           <form onSubmit={handleRegister} className="auth-form">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre</Label>
+              <Label htmlFor="username">Usuario</Label>
               <Input
-                id="name"
-                placeholder="Ingrese su nombre"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="auth-input"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Ingrese su correo electrónico"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                placeholder="Ingrese su usuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="auth-input"
                 required
               />
