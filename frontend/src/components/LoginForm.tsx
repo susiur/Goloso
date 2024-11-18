@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2, Coffee, Heart } from 'lucide-react'
+import { AlertCircle, Loader2, Heart } from 'lucide-react'
 import React from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
