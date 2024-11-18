@@ -46,7 +46,7 @@ export default function LoginForm() {
       const data = await response.json()
       localStorage.setItem('token', data.access_token)
       console.log('Token:', localStorage.getItem('token'));
-      navigate('/productos')
+      navigate('/')
     } catch (error) {
       setError('Error al iniciar sesión. Por favor, intente de nuevo.')
     } finally {
