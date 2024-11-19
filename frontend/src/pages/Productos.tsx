@@ -1,11 +1,14 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getRole } from '@/utils/authUtils';
+import React from 'react';
 
 interface Producto {
   id: number;
@@ -19,7 +22,7 @@ interface Producto {
 interface Proveedor {
   id: number;
   name: string;
-  contactInfo: string;  // Esto debería ser el número de WhatsApp del proveedor
+  contactInfo: string;
 }
 
 const qualityColors = {
@@ -74,18 +77,60 @@ async function fetchProveedores(): Promise<Proveedor[]> {
   return response.json();
 }
 
+async function deleteProducto(id: number): Promise<void> {
+  const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este producto?");
+  if (!confirmDelete) return;
+  const access_token = localStorage.getItem('token');
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso');
+  }
+
+  const response = await fetch(`${API_URL}/products/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al eliminar producto');
+  }
+}
+
+async function updateProducto(id: number, productData: Producto): Promise<Producto> {
+  const access_token = localStorage.getItem('token');
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso');
+  }
+
+  const response = await fetch(`${API_URL}/products/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(productData),
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al actualizar producto');
+  }
+
+  return response.json();
+}
+
 export default function Productos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<'All' | 'Low' | 'Medium' | 'High'>('All');
-  const [showCreateProductForm, setShowCreateProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const role = getRole() || '';
 
   useEffect(() => {
-    // Cargar productos y proveedores simultáneamente
     Promise.all([fetchProductos(), fetchProveedores()])
       .then(([productosData, proveedoresData]) => {
         setProductos(productosData);
@@ -100,7 +145,13 @@ export default function Productos() {
   };
 
   const handleCreateProductClick = () => {
-    setShowCreateProductForm(true);
+    setEditingProduct(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditProductClick = (producto: Producto) => {
+    setEditingProduct(producto);
+    setIsDialogOpen(true);
   };
 
   const handleCreateProduct = async (productData: Producto) => {
@@ -126,7 +177,30 @@ export default function Productos() {
 
     const newProduct = await response.json();
     setProductos((prev) => [...prev, newProduct]);
-    setShowCreateProductForm(false);
+    setIsDialogOpen(false);
+  };
+
+  const handleUpdateProduct = async (productData: Producto) => {
+    if (!editingProduct) return;
+    try {
+      const updatedProduct = await updateProducto(editingProduct.id, productData);
+      setProductos((prev) =>
+        prev.map((producto) => (producto.id === updatedProduct.id ? updatedProduct : producto))
+      );
+      setEditingProduct(null);
+      setIsDialogOpen(false);
+    } catch (error) {
+      setError('Error al actualizar producto');
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    try {
+      await deleteProducto(id);
+      setProductos((prev) => prev.filter((producto) => producto.id !== id));
+    } catch (error) {
+      setError('Error al eliminar producto');
+    }
   };
 
   const filteredProductos = selectedQuality === 'All'
@@ -140,7 +214,6 @@ export default function Productos() {
         setErrorMessage('Proveedor no encontrado');
         return;
       }
-      // Crear el enlace a WhatsApp
       const mensaje = `Hola ${proveedor.name}, me interesa mucho tu producto ${producto.name}`;
       const whatsappUrl = `https://wa.me/${proveedor.contactInfo}?text=${encodeURIComponent(mensaje)}`;
       window.open(whatsappUrl, '_blank');
@@ -171,104 +244,106 @@ export default function Productos() {
       <div className="container mx-auto px-4">
         <h1 className="text-3xl font-bold mb-4 text-primary">Nuestros Productos</h1>
 
-        {/* Filtro de calidad */}
         <div className="mb-8 flex space-x-4">
           {['All', 'Low', 'Medium', 'High'].map((quality) => (
-            <button
+            <Button
               key={quality}
               onClick={() => handleQualityChange(quality as 'All' | 'Low' | 'Medium' | 'High')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                selectedQuality === quality
-                  ? 'bg-accent text-accent-foreground'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              variant={selectedQuality === quality ? "default" : "outline"}
             >
               {quality === 'All' ? 'Todas' : quality === 'Low' ? 'Baja Calidad' : quality === 'Medium' ? 'Calidad Media' : 'Alta Calidad'}
-            </button>
+            </Button>
           ))}
         </div>
 
-        {/* Botón para crear producto visible solo para admin */}
         {role.includes('admin') && (
-          <button
-            onClick={handleCreateProductClick}
-            className="mb-8 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90"
-          >
+          <Button onClick={handleCreateProductClick} className="mb-8">
             Crear Producto
-          </button>
+          </Button>
         )}
 
-        {/* Formulario para crear un producto */}
-        {showCreateProductForm && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target as HTMLFormElement);
-              const newProduct: Producto = {
-                id: 0, // Esto será asignado automáticamente en el backend
-                name: formData.get('name') as string,
-                description: formData.get('description') as string,
-                price: Number(formData.get('price')),
-                quality: formData.get('quality') as 'Low' | 'Medium' | 'High',
-                providerId: 1, // Puedes obtener este valor de alguna parte, si es necesario
-              };
-              handleCreateProduct(newProduct);
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block font-semibold">Nombre</label>
-              <input
-                type="text"
-                name="name"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">Descripción</label>
-              <input
-                type="text"
-                name="description"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">Precio</label>
-              <input
-                type="number"
-                name="price"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">Id Proveedor</label>
-              <input
-                type="number"
-                name="providerId"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">Calidad</label>
-              <select
-                name="quality"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              >
-                <option value="Low">Baja</option>
-                <option value="Medium">Media</option>
-                <option value="High">Alta</option>
-              </select>
-            </div>
-            <button type="submit" className="mt-4 px-6 py-2 bg-accent text-accent-foreground rounded-lg">
-              Crear Producto
-            </button>
-          </form>
-        )}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingProduct ? 'Editar Producto' : 'Crear Producto'}</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                const newProduct: Producto = {
+                  id: editingProduct ? editingProduct.id : 0,
+                  name: formData.get('name') as string,
+                  description: formData.get('description') as string,
+                  price: Number(formData.get('price')),
+                  quality: formData.get('quality') as 'Low' | 'Medium' | 'High',
+                  providerId: Number(formData.get('providerId'))
+                };
+                if (editingProduct) {
+                  handleUpdateProduct(newProduct);
+                } else {
+                  handleCreateProduct(newProduct);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <Label htmlFor="name">Nombre</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  defaultValue={editingProduct?.name}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Descripción</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  defaultValue={editingProduct?.description}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="price">Precio</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  defaultValue={editingProduct?.price}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="quality">Calidad</Label>
+                <Select name="quality" defaultValue={editingProduct?.quality || 'Medium'}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona la calidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Baja</SelectItem>
+                    <SelectItem value="Medium">Media</SelectItem>
+                    <SelectItem value="High">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="providerId">ID del Proveedor</Label>
+                <Input
+                  id="providerId"
+                  name="providerId"
+                  type="number"
+                  defaultValue={editingProduct?.providerId}
+                  required
+                />
+              </div>
+              <Button type="submit">
+                {editingProduct ? 'Actualizar Producto' : 'Crear Producto'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-8">
           {filteredProductos.map((producto) => {
@@ -281,17 +356,35 @@ export default function Productos() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-lg font-bold">{formatPrice(producto.price)}</p>
-                  <Badge className={`${qualityColors[producto.quality]} py-1 px-3 rounded-full text-xs`}>
-                  {producto.quality === 'Low' ? 'Baja Calidad' : producto.quality === 'Medium' ? 'Calidad Media' : 'Alta Calidad'}
-                </Badge>
+                  <Badge variant="secondary" className={qualityColors[producto.quality]}>
+                    {producto.quality === 'Low' ? 'Baja Calidad' : producto.quality === 'Medium' ? 'Calidad Media' : 'Alta Calidad'}
+                  </Badge>
+
+                  {role.includes('admin') && (
+                    <div className="flex justify-between mt-4">
+                      <Button
+                        onClick={() => handleEditProductClick(producto)}
+                        variant="outline"
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteProduct(producto.id)}
+                        variant="destructive"
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  )}
+
                   {proveedor && (
-                    <div className="flex justify-end">
-                      <button
+                    <div className="flex justify-end mt-4">
+                      <Button
                         onClick={() => handleWhatsAppClick(producto)}
-                        className="px-4 py-2 rounded-lg hover:bg-accent hover:text-white"
+                        variant="outline"
                       >
                         Comprar
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </CardContent>

@@ -11,7 +11,6 @@ export function getRole(): string | null {
     try {
       // Intentamos decodificar el token
       const decoded: DecodedToken = jwtDecode(token);
-      console.log('Token decodificado:', decoded);
       // Verificamos si el campo `role` existe en el decoded token
       if (decoded && decoded.role) {
         return decoded.role; // Si existe el rol, lo retornamos

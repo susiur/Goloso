@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Phone } from 'lucide-react'
-import React from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Loader2, Phone, Pencil, Trash2 } from 'lucide-react'
 import { getRole } from '@/utils/authUtils'
+import { Badge } from "@/components/ui/badge"
+import React from 'react'
 
 interface Proveedor {
   id: number
@@ -34,12 +39,76 @@ async function fetchProveedores(): Promise<Proveedor[]> {
   return response.json()
 }
 
+async function createProveedor(providerData: Omit<Proveedor, 'id'>): Promise<Proveedor> {
+  const access_token = localStorage.getItem('token')
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso')
+  }
+
+  const response = await fetch(`${API_URL}/providers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(providerData),
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al crear el proveedor')
+  }
+
+  return response.json()
+}
+
+async function updateProveedor(id: number, providerData: Omit<Proveedor, 'id'>): Promise<Proveedor> {
+  const access_token = localStorage.getItem('token')
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso')
+  }
+
+  const response = await fetch(`${API_URL}/providers/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(providerData),
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al actualizar el proveedor')
+  }
+
+  return response.json()
+}
+
+async function deleteProveedor(id: number): Promise<void> {
+  const access_token = localStorage.getItem('token')
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso')
+  }
+
+  const response = await fetch(`${API_URL}/providers/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${access_token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al eliminar el proveedor')
+  }
+}
+
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showCreateProviderForm, setShowCreateProviderForm] = useState(false) // Estado para mostrar el formulario
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingProvider, setEditingProvider] = useState<Proveedor | null>(null)
   const role = getRole() || ''
+
   useEffect(() => {
     fetchProveedores()
       .then(setProveedores)
@@ -48,34 +117,46 @@ export default function Proveedores() {
   }, [])
 
   const handleCreateProviderClick = () => {
-    setShowCreateProviderForm(true) // Muestra el formulario para crear un proveedor
+    setEditingProvider(null)
+    setIsDialogOpen(true)
   }
 
-  const handleCreateProvider = async (providerData: Proveedor) => {
-    const access_token = localStorage.getItem('token')
-    if (!access_token) {
-      setError('No se encontró token de acceso')
-      return
+  const handleEditProviderClick = (provider: Proveedor) => {
+    setEditingProvider(provider)
+    setIsDialogOpen(true)
+  }
+
+  const handleSubmitProvider = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const providerData = {
+      name: formData.get('name') as string,
+      contactInfo: formData.get('contactInfo') as string,
     }
 
-    const response = await fetch(`${API_URL}/providers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${access_token}`,
-      },
-      body: JSON.stringify(providerData),
-    })
-
-    if (!response.ok) {
-      setError('Error al crear el proveedor')
-      return
+    try {
+      if (editingProvider) {
+        const updatedProvider = await updateProveedor(editingProvider.id, providerData)
+        setProveedores((prev) => prev.map((p) => (p.id === updatedProvider.id ? updatedProvider : p)))
+      } else {
+        const newProvider = await createProveedor(providerData)
+        setProveedores((prev) => [...prev, newProvider])
+      }
+      setIsDialogOpen(false)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Error al procesar el proveedor')
     }
+  }
 
-    // Refrescar la lista de proveedores después de agregar el nuevo proveedor
-    const newProvider = await response.json()
-    setProveedores((prev) => [...prev, newProvider])
-    setShowCreateProviderForm(false) // Ocultar el formulario después de agregar el proveedor
+  const handleDeleteProvider = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este proveedor?')) {
+      try {
+        await deleteProveedor(id)
+        setProveedores((prev) => prev.filter((p) => p.id !== id))
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Error al eliminar el proveedor')
+      }
+    }
   }
 
   if (loading) {
@@ -99,69 +180,67 @@ export default function Proveedores() {
       <div className="container mx-auto px-4">
         <h1 className="text-3xl font-bold mb-8 text-accent">Nuestros Proveedores</h1>
 
-        {/* Botón para crear proveedor visible solo para admin */}
         {role.includes('admin') && (
-          <button
-            onClick={handleCreateProviderClick}
-            className="mb-8 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90"
-          >
+          <Button onClick={handleCreateProviderClick} className="mb-8">
             Crear Proveedor
-          </button>
+          </Button>
         )}
 
-        {/* Formulario para crear un proveedor */}
-        {showCreateProviderForm && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              const formData = new FormData(e.target as HTMLFormElement)
-              const newProvider: Proveedor = {
-                id: 0, // Este ID se asignará automáticamente desde la base de datos
-                name: formData.get('name') as string,
-                contactInfo: formData.get('contactInfo') as string,
-              }
-              handleCreateProvider(newProvider)
-            }}
-            className="space-y-4 mb-8"
-          >
-            <div>
-              <label className="block font-semibold">Nombre del Proveedor</label>
-              <input
-                type="text"
-                name="name"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">Información de Contacto</label>
-              <input
-                type="text"
-                name="contactInfo"
-                required
-                className="mt-2 px-4 py-2 w-full border rounded-lg"
-              />
-            </div>
-            <div className="mt-4">
-              <button type="submit" className="px-4 py-2 bg-accent text-accent-foreground rounded-lg">
-                Crear Proveedor
-              </button>
-            </div>
-          </form>
-        )}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingProvider ? 'Editar Proveedor' : 'Crear Proveedor'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmitProvider} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nombre del Proveedor</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  defaultValue={editingProvider?.name}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="contactInfo">Información de Contacto</Label>
+                <Input
+                  id="contactInfo"
+                  name="contactInfo"
+                  defaultValue={editingProvider?.contactInfo}
+                  required
+                />
+              </div>
+              <Button type="submit">
+                {editingProvider ? 'Actualizar Proveedor' : 'Crear Proveedor'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
-        {/* Mostrar proveedores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {proveedores.map((proveedor) => (
             <Card key={proveedor.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200">
-              <CardHeader className="rounded-t-lg">
+              <CardHeader className="rounded-t-lg flex justify-between items-start">
                 <CardTitle className="text-accent">{proveedor.name}</CardTitle>
+                <Badge variant="outline" className="text-xs">ID: {proveedor.id}</Badge>
               </CardHeader>
               <CardContent className="p-4">
                 <div className="flex items-center text-muted-foreground">
                   <Phone className="w-5 h-5 mr-2 text-accent" />
                   <CardDescription>{proveedor.contactInfo}</CardDescription>
                 </div>
+                {role.includes('admin') && (
+                  <div className="flex justify-end mt-4 space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEditProviderClick(proveedor)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteProvider(proveedor.id)}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

@@ -24,7 +24,7 @@ export default function Home() {
           <section className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4 text-accent">Bienvenido a El Goloso</h2>
           <p className="text-xl mb-8 text-muted-foreground">
-            "Descubre nuestra deliciosa selección de productos de calidad"
+            "Descubre nuestra selección de órganos de calidad"
           </p>
           </section>
           <section className="grid md:grid-cols-3 gap-8">
