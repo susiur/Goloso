@@ -231,12 +231,12 @@ export default function Proveedores() {
                 </div>
                 {role.includes('admin') && (
                   <div className="flex justify-end mt-4 space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEditProviderClick(proveedor)}>
-                      <Pencil className="w-4 h-4 mr-2" />
+                    <Button variant="ghost" size="sm" className="hover:border hover:border-accent hover:bg-transparent" onClick={() => handleEditProviderClick(proveedor)}>
+                      <Pencil className="w-4 h-4 text-accent hover:text-white" />
                       Editar
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteProvider(proveedor.id)}>
-                      <Trash2 className="w-4 h-4 mr-2" />
+                    <Button variant="ghost" size="sm" className="hover:border hover:border-accent hover:bg-transparent" onClick={() => handleDeleteProvider(proveedor.id)}>
+                      <Trash2 className="w-4 h-4 text-red-500 hover:text-white" />
                       Eliminar
                     </Button>
                   </div>
