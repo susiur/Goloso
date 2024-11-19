@@ -16,13 +16,19 @@ interface Producto {
   providerId: number;
 }
 
+interface Proveedor {
+  id: number;
+  name: string;
+  contactInfo: string;  // Esto debería ser el número de WhatsApp del proveedor
+}
+
 const qualityColors = {
   Low: 'bg-red-100 text-red-600',
   Medium: 'bg-yellow-100 text-yellow-600',
   High: 'bg-green-100 text-green-600',
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price);
@@ -48,18 +54,44 @@ async function fetchProductos(): Promise<Producto[]> {
   return response.json();
 }
 
+async function fetchProveedores(): Promise<Proveedor[]> {
+  const access_token = localStorage.getItem('token');
+  if (!access_token) {
+    throw new Error('No se encontró token de acceso');
+  }
+
+  const response = await fetch(`${API_URL}/providers`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al obtener proveedor');
+  }
+
+  return response.json();
+}
+
 export default function Productos() {
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<'All' | 'Low' | 'Medium' | 'High'>('All');
-  const [showCreateProductForm, setShowCreateProductForm] = useState(false); 
-  const role = getRole() || ''
+  const [showCreateProductForm, setShowCreateProductForm] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const role = getRole() || '';
 
   useEffect(() => {
-    fetchProductos()
-      .then(setProductos)
-      .catch(() => setError('Error al cargar los productos'))
+    // Cargar productos y proveedores simultáneamente
+    Promise.all([fetchProductos(), fetchProveedores()])
+      .then(([productosData, proveedoresData]) => {
+        setProductos(productosData);
+        setProveedores(proveedoresData || []);
+      })
+      .catch(() => setError('Error al cargar los productos o proveedores'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -68,7 +100,7 @@ export default function Productos() {
   };
 
   const handleCreateProductClick = () => {
-    setShowCreateProductForm(true); 
+    setShowCreateProductForm(true);
   };
 
   const handleCreateProduct = async (productData: Producto) => {
@@ -101,6 +133,22 @@ export default function Productos() {
     ? productos
     : productos.filter(producto => producto.quality === selectedQuality);
 
+  const handleWhatsAppClick = async (producto: Producto) => {
+    try {
+      const proveedor = proveedores.find(p => p.id === producto.providerId);
+      if (!proveedor) {
+        setErrorMessage('Proveedor no encontrado');
+        return;
+      }
+      // Crear el enlace a WhatsApp
+      const mensaje = `Hola ${proveedor.name}, me interesa mucho tu producto ${producto.name}`;
+      const whatsappUrl = `https://wa.me/${proveedor.contactInfo}?text=${encodeURIComponent(mensaje)}`;
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      setErrorMessage('Error al generar el enlace de WhatsApp');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-background">
@@ -114,12 +162,6 @@ export default function Productos() {
     return (
       <div className="text-center text-red-500 mt-8 bg-background min-h-screen pt-8">
         <p className="font-semibold">{error}</p>
-        <button
-          className="mt-4 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90"
-          onClick={() => window.location.reload()}
-        >
-          Reintentar
-        </button>
       </div>
     );
   }
@@ -202,49 +244,65 @@ export default function Productos() {
               />
             </div>
             <div>
+              <label className="block font-semibold">Id Proveedor</label>
+              <input
+                type="number"
+                name="providerId"
+                required
+                className="mt-2 px-4 py-2 w-full border rounded-lg"
+              />
+            </div>
+            <div>
               <label className="block font-semibold">Calidad</label>
               <select
                 name="quality"
                 required
                 className="mt-2 px-4 py-2 w-full border rounded-lg"
               >
-                <option value="Low">Baja Calidad</option>
-                <option value="Medium">Calidad Media</option>
-                <option value="High">Alta Calidad</option>
+                <option value="Low">Baja</option>
+                <option value="Medium">Media</option>
+                <option value="High">Alta</option>
               </select>
             </div>
-            <div className="mt-4">
-              <button type="submit" className="px-4 py-2 bg-accent text-accent-foreground rounded-lg">
-                Crear Producto
-              </button>
-            </div>
+            <button type="submit" className="mt-4 px-6 py-2 bg-accent text-accent-foreground rounded-lg">
+              Crear Producto
+            </button>
           </form>
         )}
 
-        {/* Mostrar productos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProductos.map((producto) => (
-            <Card key={producto.id} className="relative border rounded-lg shadow transition-transform hover:scale-105">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg font-bold text-accent">{producto.name}</CardTitle>
-                <CardDescription className="text-sm text-muted-foreground line-clamp-2">
-                  {producto.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 flex flex-col justify-between">
-                <div className="mb-4">
-                  <span className="text-lg font-semibold text-accent">{formatPrice(producto.price)}</span>
-                </div>
-                <Badge className={`${qualityColors[producto.quality]} py-1 px-3 rounded-full text-xs`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-8">
+          {filteredProductos.map((producto) => {
+            const proveedor = proveedores.find(p => p.id === producto.providerId);
+            return (
+              <Card key={producto.id} className="hover:shadow-xl transition-shadow duration-300">
+                <CardHeader>
+                  <CardTitle>{producto.name}</CardTitle>
+                  <CardDescription>{producto.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg font-bold">{formatPrice(producto.price)}</p>
+                  <Badge className={`${qualityColors[producto.quality]} py-1 px-3 rounded-full text-xs`}>
                   {producto.quality === 'Low' ? 'Baja Calidad' : producto.quality === 'Medium' ? 'Calidad Media' : 'Alta Calidad'}
                 </Badge>
-              </CardContent>
-              <div className="absolute top-4 right-4 bg-white p-2 rounded-full shadow">
-                <span className="text-xs font-semibold text-gray-500">#{producto.id}</span>
-              </div>
-            </Card>
-          ))}
+                  {proveedor && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleWhatsAppClick(producto)}
+                        className="px-4 py-2 rounded-lg hover:bg-accent hover:text-white"
+                      >
+                        Comprar
+                      </button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+
+        {errorMessage && (
+          <p className="text-red-500 mt-4 text-center">{errorMessage}</p>
+        )}
       </div>
     </div>
   );
